@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["openjdk21"]
+
+[phases.build]
+cmds = ["chmod +x gradlew", "./gradlew clean bootJar -x test"]
+
+[start]
+cmd = "java -jar build/libs/Farafina-Backend-0.0.1-SNAPSHOT.jar"
