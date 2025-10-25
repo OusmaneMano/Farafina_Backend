@@ -1,38 +1,198 @@
-HELP.md
-.gradle
+### === COMMON GLOBAL IGNORES === ###
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+desktop.ini
+
+# Logs and temp
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*.old
+*.orig
+
+# Environment & Secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+aws_credentials.json
+google-services.json
+firebase_config.json
+.secret
+*.token
+
+# Compressed
+*.zip
+*.tar
+*.gz
+*.rar
+
+---
+
+### === JAVA / SPRING BOOT === ###
+target/
 build/
-!gradle/wrapper/gradle-wrapper.jar
+out/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
-### STS ###
-.apt_generated
+.gradle/
+.gradle-cache/
 .classpath
-.factorypath
 .project
-.settings
-.springBeans
-.sts4-cache
+.factorypath
+.settings/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+HELP.md
+.mvn/
+spring.log
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IDE-specific
+.idea/
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+*.iws
 .vscode/
+*.launch
+*.prefs
+*.metadata/
+
+# OS-level caches
+.recommenders/
+*.classpath
+*.project
+*.settings/
+.sts4-cache
+.springBeans
+.apt_generated
+
+---
+
+### === FLUTTER / ANDROID STUDIO === ###
+# Flutter & Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+android/app/debug/
+android/app/profile/
+android/app/release/
+ios/Flutter/.last_build_id
+ios/Pods/
+ios/.symlinks/
+ios/build/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Android
+*.apk
+*.ap_
+*.dex
+*.class
+*.jar
+*.keystore
+*.jks
+*.so
+*.aar
+*.iml
+local.properties
+captures/
+.gradle/
+.idea/
+*.log
+android/.gradle/
+android/.idea/
+android/local.properties
+android/.cxx/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+---
+
+### === NODE / FRONTEND === ###
 node_modules/
+dist/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+.vscode/
+.next/
+out/
+
+---
+
+### === DATABASE / TEMP FILES === ###
+*.db
+*.sqlite
+*.sql
+*.pid
+*.seed
+*.dump
+
+---
+
+### === AWS / RAILWAY / DEPLOYMENT === ###
+.aws/
+.aws-sam/
+serverless.yml
+.env.railway
+.env.production
+.env.staging
+*.tfstate
+.terraform/
+terraform.tfstate*
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+__pycache__/
+cache/
+tmp/
+*.bak
+
+---
+
+### === GRADLE WRAPPER EXCEPTION === ###
+!gradle/wrapper/gradle-wrapper.jar
+
+---
+
+### === CUSTOM === ###
+# Exclude build outputs and logs from nested modules
+**/build/
+**/out/
+**/.idea/
+**/.vscode/
+
+# Include assets and important configs
+!**/assets/
+!**/res/
+!**/lib/
+!**/pubspec.yaml
+!**/settings.gradle
+!**/build.gradle
+!**/gradlew
+!**/gradlew.bat
