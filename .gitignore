@@ -196,3 +196,4 @@ tmp/
 !**/build.gradle
 !**/gradlew
 !**/gradlew.bat
+node_modules/
