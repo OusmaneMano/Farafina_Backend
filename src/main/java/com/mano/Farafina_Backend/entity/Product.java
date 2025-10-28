@@ -1,5 +1,6 @@
 package com.mano.Farafina_Backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -23,9 +24,11 @@ public class Product {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
+    @JsonProperty("userId")
     private Long userId;
 
     @Column(name = "product_name", nullable = false, length = 255)
+    @JsonProperty("productName")
     private String productName;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -35,6 +38,7 @@ public class Product {
     private String category;
 
     @Column(name = "product_condition", nullable = false, length = 50)
+    @JsonProperty("condition")
     private String condition;
 
     @Column(name = "price", nullable = false, precision = 10, scale = 2)
@@ -50,39 +54,51 @@ public class Product {
     private String city;
 
     @Column(name = "shop_name", length = 255)
+    @JsonProperty("shopName")
     private String shopName;
 
     @Column(name = "contact_phone", length = 50)
+    @JsonProperty("contactPhone")
     private String contactPhone;
 
     @Column(name = "quantity")
     private Integer quantity = 1;
 
     @Column(name = "shipping_available")
+    @JsonProperty("shippingAvailable")
     private Boolean shippingAvailable = false;
 
     @Column(name = "local_pickup")
+    @JsonProperty("localPickup")
     private Boolean localPickup = true;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "product_images",
-            joinColumns = @JoinColumn(name = "product_id"))
+    @CollectionTable(
+            name = "product_images",
+            joinColumns = @JoinColumn(name = "product_id")
+    )
     @Column(name = "image_url", length = 500)
+    @OrderColumn(name = "image_order")
     private List<String> images = new ArrayList<>();
 
     @Column(name = "video_url", length = 500)
+    @JsonProperty("videoUrl")
     private String videoUrl;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
+    @JsonProperty("createdAt")
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
+    @JsonProperty("updatedAt")
     private LocalDateTime updatedAt;
 
     // Constructors
-    public Product() {}
+    public Product() {
+        this.images = new ArrayList<>();
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -206,11 +222,18 @@ public class Product {
     }
 
     public List<String> getImages() {
+        if (images == null) {
+            images = new ArrayList<>();
+        }
         return images;
     }
 
     public void setImages(List<String> images) {
-        this.images = images;
+        if (images == null) {
+            this.images = new ArrayList<>();
+        } else {
+            this.images = images;
+        }
     }
 
     public String getVideoUrl() {

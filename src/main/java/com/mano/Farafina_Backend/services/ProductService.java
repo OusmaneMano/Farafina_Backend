@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,7 +22,23 @@ public class ProductService {
 
     @Transactional
     public Product createProduct(Product product) {
-        return productRepository.save(product);
+        // Ensure images list is initialized
+        if (product.getImages() == null) {
+            product.setImages(new ArrayList<>());
+        }
+
+        System.out.println("ProductService: Saving product with " + product.getImages().size() + " images");
+
+        // Save the product
+        Product savedProduct = productRepository.save(product);
+
+        // Force flush to ensure images are persisted immediately
+        productRepository.flush();
+
+        System.out.println("ProductService: Product saved with ID " + savedProduct.getId());
+        System.out.println("ProductService: Images count after save: " + savedProduct.getImages().size());
+
+        return savedProduct;
     }
 
     public List<Product> getAllProducts() {
@@ -60,10 +77,19 @@ public class ProductService {
         product.setQuantity(productDetails.getQuantity());
         product.setShippingAvailable(productDetails.getShippingAvailable());
         product.setLocalPickup(productDetails.getLocalPickup());
-        product.setImages(productDetails.getImages());
+
+        // Update images - clear old ones and add new ones
+        if (productDetails.getImages() != null) {
+            product.getImages().clear();
+            product.getImages().addAll(productDetails.getImages());
+        }
+
         product.setVideoUrl(productDetails.getVideoUrl());
 
-        return productRepository.save(product);
+        Product updated = productRepository.save(product);
+        productRepository.flush();
+
+        return updated;
     }
 
     @Transactional
