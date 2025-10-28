@@ -7,7 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -41,15 +40,18 @@ public class S3Service {
     }
 
     private void uploadFile(MultipartFile file, String fileName) throws IOException {
+        // FIXED: Removed ACL setting since your bucket doesn't allow ACLs
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(fileName)
                 .contentType(file.getContentType())
-                .acl(ObjectCannedACL.PUBLIC_READ)
+                // .acl(ObjectCannedACL.PUBLIC_READ)  // REMOVED THIS LINE
                 .build();
 
         s3Client.putObject(putObjectRequest,
                 RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+        System.out.println("File uploaded successfully: " + fileName);
     }
 
     private String generateFileName(MultipartFile file, String folder) {
