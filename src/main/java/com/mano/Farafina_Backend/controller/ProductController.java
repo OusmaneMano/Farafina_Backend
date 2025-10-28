@@ -2,13 +2,10 @@ package com.mano.Farafina_Backend.controller;
 
 import com.mano.Farafina_Backend.entity.Product;
 import com.mano.Farafina_Backend.services.ProductService;
-import com.mano.Farafina_Backend.services.S3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,68 +17,34 @@ import java.util.Map;
 public class ProductController {
 
     private final ProductService productService;
-    private final S3Service s3Service;
 
     @Autowired
-    public ProductController(ProductService productService, S3Service s3Service) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
-        this.s3Service = s3Service;
     }
 
-    // CREATE PRODUCT WITH MEDIA UPLOAD
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<?> createProduct(
-            @RequestParam("userId") Long userId,
-            @RequestParam("productName") String productName,
-            @RequestParam("description") String description,
-            @RequestParam("category") String category,
-            @RequestParam("condition") String condition,
-            @RequestParam("price") String price,
-            @RequestParam("currency") String currency,
-            @RequestParam("country") String country,
-            @RequestParam(value = "city", required = false) String city,
-            @RequestParam(value = "shopName", required = false) String shopName,
-            @RequestParam(value = "contactPhone", required = false) String contactPhone,
-            @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
-            @RequestParam(value = "shippingAvailable", required = false, defaultValue = "false") Boolean shippingAvailable,
-            @RequestParam(value = "localPickup", required = false, defaultValue = "true") Boolean localPickup,
-            @RequestPart(value = "images", required = false) List<MultipartFile> images,
-            @RequestPart(value = "video", required = false) MultipartFile video
-    ) {
+    // ---------------- CREATE PRODUCT ----------------
+    @PostMapping
+    public ResponseEntity<?> createProduct(@RequestBody Product product) {
         try {
-            Product product = new Product();
-            product.setUserId(userId);
-            product.setProductName(productName);
-            product.setDescription(description);
-            product.setCategory(category);
-            product.setCondition(condition);
-            product.setPrice(new BigDecimal(price));
-            product.setCurrency(currency);
-            product.setCountry(country);
-            product.setCity(city);
-            product.setShopName(shopName);
-            product.setContactPhone(contactPhone);
-            product.setQuantity(quantity);
-            product.setShippingAvailable(shippingAvailable);
-            product.setLocalPickup(localPickup);
+            System.out.println("=== PRODUCT CREATION DEBUG ===");
+            System.out.println("Product Name: " + product.getProductName());
+            System.out.println("User ID: " + product.getUserId());
+            System.out.println("Category: " + product.getCategory());
+            System.out.println("Price: " + product.getPrice());
+            System.out.println("Images received: " + (product.getImages() != null ? product.getImages().size() : "NULL"));
+            System.out.println("Video URL: " + product.getVideoUrl());
 
-            // Upload images to S3 and set URLs
-            List<String> imageUrls = new ArrayList<>();
-            if (images != null) {
-                for (MultipartFile img : images) {
-                    String url = s3Service.uploadImage(img);
-                    imageUrls.add(url);
-                }
-            }
-            product.setImages(imageUrls);
-
-            // Upload video to S3 and set URL
-            if (video != null) {
-                String videoUrl = s3Service.uploadVideo(video);
-                product.setVideoUrl(videoUrl);
+            if (product.getImages() == null) {
+                product.setImages(new ArrayList<>());
             }
 
             Product savedProduct = productService.createProduct(product);
+
+            System.out.println("Product saved with ID: " + savedProduct.getId());
+            System.out.println("Images in saved product: " +
+                    (savedProduct.getImages() != null ? savedProduct.getImages().size() : "NULL"));
+            System.out.println("=== END DEBUG ===");
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -91,13 +54,12 @@ public class ProductController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(
-                    Map.of("success", false, "error", "Failed to create product", "details", e.getMessage())
-            );
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to create product", "details", e.getMessage()));
         }
     }
 
-    // GET ALL PRODUCTS
+    // ---------------- GET ALL PRODUCTS / SEARCH ----------------
     @GetMapping
     public ResponseEntity<?> getAllProducts(
             @RequestParam(required = false) String category,
@@ -113,6 +75,42 @@ public class ProductController {
             } else {
                 products = productService.getAllProducts();
             }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", products);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch products"));
+        }
+    }
+
+    // ---------------- GET PRODUCT BY ID ----------------
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProductById(@PathVariable Long id) {
+        try {
+            return productService.getProductById(id)
+                    .map(product -> {
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("success", true);
+                        response.put("product", product);
+                        return ResponseEntity.ok(response);
+                    })
+                    .orElse(ResponseEntity.status(404)
+                            .body(Map.of("success", false, "error", "Product not found")));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch product"));
+        }
+    }
+
+    // ---------------- GET PRODUCTS BY USER ----------------
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getProductsByUserId(@PathVariable Long userId) {
+        try {
+            List<Product> products = productService.getProductsByUserId(userId);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("products", products);
@@ -123,54 +121,34 @@ public class ProductController {
         }
     }
 
-    // GET PRODUCT BY ID
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getProductById(@PathVariable Long id) {
-        try {
-            return productService.getProductById(id)
-                    .map(product -> ResponseEntity.ok(Map.of("success", true, "product", product)))
-                    .orElse(ResponseEntity.status(404).body(Map.of("success", false, "error", "Product not found")));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("success", false, "error", "Failed to fetch product"));
-        }
-    }
-
-    // GET PRODUCTS BY USER ID
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<?> getProductsByUserId(@PathVariable Long userId) {
-        try {
-            List<Product> products = productService.getProductsByUserId(userId);
-            return ResponseEntity.ok(Map.of("success", true, "products", products));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("success", false, "error", "Failed to fetch products"));
-        }
-    }
-
-    // UPDATE PRODUCT
+    // ---------------- UPDATE PRODUCT ----------------
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateProduct(
-            @PathVariable Long id,
-            @RequestBody Product productDetails
-    ) {
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
         try {
             Product updatedProduct = productService.updateProduct(id, productDetails);
-            return ResponseEntity.ok(Map.of("success", true, "message", "Product updated successfully", "product", updatedProduct));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Product updated successfully");
+            response.put("product", updatedProduct);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(Map.of("success", false, "error", e.getMessage()));
+            return ResponseEntity.status(404)
+                    .body(Map.of("success", false, "error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "Failed to update product"));
         }
     }
 
-    // DELETE PRODUCT
+    // ---------------- DELETE PRODUCT ----------------
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         try {
             productService.deleteProduct(id);
-            return ResponseEntity.ok(Map.of("success", true, "message", "Product deleted successfully"));
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Product deleted successfully");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "Failed to delete product"));
