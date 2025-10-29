@@ -31,7 +31,9 @@ public class ProductController {
             System.out.println("Product Name: " + product.getProductName());
             System.out.println("User ID: " + product.getUserId());
             System.out.println("Category: " + product.getCategory());
+            System.out.println("Condition: " + product.getCondition());
             System.out.println("Price: " + product.getPrice());
+            System.out.println("Country: " + product.getCountry());
             System.out.println("Images received: " + (product.getImages() != null ? product.getImages().size() : "NULL"));
             System.out.println("Video URL: " + product.getVideoUrl());
 
@@ -79,6 +81,7 @@ public class ProductController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("products", products);
+            response.put("count", products.size());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -114,6 +117,7 @@ public class ProductController {
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("products", products);
+            response.put("count", products.size());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
@@ -125,7 +129,16 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
         try {
+            System.out.println("=== PRODUCT UPDATE DEBUG ===");
+            System.out.println("Updating product ID: " + id);
+            System.out.println("New data received: " + productDetails.getProductName());
+
             Product updatedProduct = productService.updateProduct(id, productDetails);
+
+            System.out.println("Product updated successfully");
+            System.out.println("Updated at: " + updatedProduct.getUpdatedAt());
+            System.out.println("=== END UPDATE DEBUG ===");
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Product updated successfully");
@@ -135,6 +148,7 @@ public class ProductController {
             return ResponseEntity.status(404)
                     .body(Map.of("success", false, "error", e.getMessage()));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "Failed to update product"));
         }
@@ -152,6 +166,88 @@ public class ProductController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "Failed to delete product"));
+        }
+    }
+
+    // ---------------- GET STATISTICS ----------------
+    @GetMapping("/stats")
+    public ResponseEntity<?> getStatistics() {
+        try {
+            Map<String, Object> stats = productService.getStatistics();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("stats", stats);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch statistics"));
+        }
+    }
+
+    // ---------------- GET PRODUCTS BY CATEGORY ----------------
+    @GetMapping("/category/{category}")
+    public ResponseEntity<?> getProductsByCategory(@PathVariable String category) {
+        try {
+            List<Product> products = productService.getProductsByCategory(category);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", products);
+            response.put("count", products.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch products"));
+        }
+    }
+
+    // ---------------- GET PRODUCTS BY CONDITION ----------------
+    @GetMapping("/condition/{condition}")
+    public ResponseEntity<?> getProductsByCondition(@PathVariable String condition) {
+        try {
+            List<Product> products = productService.getProductsByCondition(condition);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", products);
+            response.put("count", products.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch products"));
+        }
+    }
+
+    // ---------------- GET LATEST PRODUCTS ----------------
+    @GetMapping("/latest")
+    public ResponseEntity<?> getLatestProducts(@RequestParam(defaultValue = "10") int limit) {
+        try {
+            List<Product> products = productService.getLatestProducts(limit);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", products);
+            response.put("count", products.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch products"));
+        }
+    }
+
+    // ---------------- GET RECENTLY UPDATED PRODUCTS ----------------
+    @GetMapping("/recently-updated")
+    public ResponseEntity<?> getRecentlyUpdatedProducts(@RequestParam(defaultValue = "10") int limit) {
+        try {
+            List<Product> products = productService.getRecentlyUpdatedProducts(limit);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", products);
+            response.put("count", products.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", "Failed to fetch products"));
         }
     }
 }
