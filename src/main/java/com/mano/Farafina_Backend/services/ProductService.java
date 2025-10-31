@@ -5,6 +5,7 @@ import com.mano.Farafina_Backend.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,9 @@ import java.util.*;
 public class ProductService {
 
     private final ProductRepository productRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     public ProductService(ProductRepository productRepository) {
@@ -194,5 +198,131 @@ public class ProductService {
     public List<Product> getRecentlyUpdatedProducts(int limit) {
         Pageable pageable = PageRequest.of(0, limit);
         return productRepository.findRecentlyUpdated(pageable);
+    }
+
+    // ============ LIKES & COMMENTS METHODS ============
+
+    // Get all likes for a product
+    public List<Map<String, Object>> getProductLikes(Long productId) {
+        String sql = "SELECT pl.id, pl.product_id, pl.user_id, pl.liked_at, " +
+                "u.username, u.email " +
+                "FROM product_likes pl " +
+                "JOIN users u ON pl.user_id = u.id " +
+                "WHERE pl.product_id = ? " +
+                "ORDER BY pl.liked_at DESC";
+
+        return jdbcTemplate.queryForList(sql, productId);
+    }
+
+    // Get all comments for a product
+    public List<Map<String, Object>> getProductComments(Long productId) {
+        String sql = "SELECT pc.id, pc.product_id, pc.user_id, pc.comment, " +
+                "pc.commented_at, pc.updated_at, u.username, u.email " +
+                "FROM product_comments pc " +
+                "JOIN users u ON pc.user_id = u.id " +
+                "WHERE pc.product_id = ? " +
+                "ORDER BY pc.commented_at DESC";
+
+        return jdbcTemplate.queryForList(sql, productId);
+    }
+
+    // Add a like to a product
+    public boolean likeProduct(Long productId, Long userId) {
+        try {
+            // Check if like already exists
+            String checkSql = "SELECT COUNT(*) FROM product_likes WHERE product_id = ? AND user_id = ?";
+            Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, productId, userId);
+
+            if (count != null && count > 0) {
+                return false; // Already liked
+            }
+
+            // Add like
+            String sql = "INSERT INTO product_likes (product_id, user_id, liked_at) VALUES (?, ?, NOW())";
+            jdbcTemplate.update(sql, productId, userId);
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Remove a like from a product
+    public boolean unlikeProduct(Long productId, Long userId) {
+        try {
+            String sql = "DELETE FROM product_likes WHERE product_id = ? AND user_id = ?";
+            int rows = jdbcTemplate.update(sql, productId, userId);
+            return rows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Add a comment to a product
+    public Map<String, Object> addComment(Long productId, Long userId, String comment) {
+        try {
+            String sql = "INSERT INTO product_comments (product_id, user_id, comment, commented_at) " +
+                    "VALUES (?, ?, ?, NOW())";
+            jdbcTemplate.update(sql, productId, userId, comment);
+
+            // Get the inserted comment
+            String selectSql = "SELECT pc.id, pc.product_id, pc.user_id, pc.comment, " +
+                    "pc.commented_at, pc.updated_at, u.username, u.email " +
+                    "FROM product_comments pc " +
+                    "JOIN users u ON pc.user_id = u.id " +
+                    "WHERE pc.product_id = ? AND pc.user_id = ? " +
+                    "ORDER BY pc.commented_at DESC LIMIT 1";
+
+            return jdbcTemplate.queryForMap(selectSql, productId, userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new HashMap<>();
+        }
+    }
+
+    // Delete a comment
+    public boolean deleteComment(Long commentId) {
+        try {
+            String sql = "DELETE FROM product_comments WHERE id = ?";
+            int rows = jdbcTemplate.update(sql, commentId);
+            return rows > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Get interaction statistics for a product
+    public Map<String, Object> getProductInteractionStats(Long productId) {
+        Map<String, Object> stats = new HashMap<>();
+
+        try {
+            // Count likes
+            String likesSql = "SELECT COUNT(*) FROM product_likes WHERE product_id = ?";
+            Integer likesCount = jdbcTemplate.queryForObject(likesSql, Integer.class, productId);
+            stats.put("likesCount", likesCount != null ? likesCount : 0);
+
+            // Count comments
+            String commentsSql = "SELECT COUNT(*) FROM product_comments WHERE product_id = ?";
+            Integer commentsCount = jdbcTemplate.queryForObject(commentsSql, Integer.class, productId);
+            stats.put("commentsCount", commentsCount != null ? commentsCount : 0);
+
+            // Get recent interactions
+            String recentSql = "SELECT 'like' as type, liked_at as timestamp FROM product_likes WHERE product_id = ? " +
+                    "UNION ALL " +
+                    "SELECT 'comment' as type, commented_at as timestamp FROM product_comments WHERE product_id = ? " +
+                    "ORDER BY timestamp DESC LIMIT 5";
+            List<Map<String, Object>> recentActivity = jdbcTemplate.queryForList(recentSql, productId, productId);
+            stats.put("recentActivity", recentActivity);
+        } catch (Exception e) {
+            e.printStackTrace();
+            stats.put("likesCount", 0);
+            stats.put("commentsCount", 0);
+            stats.put("recentActivity", new ArrayList<>());
+        }
+
+        return stats;
     }
 }

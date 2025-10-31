@@ -85,6 +85,16 @@ public class Product {
     @JsonProperty("videoUrl")
     private String videoUrl;
 
+    // ============ LIKES & COMMENTS COUNT FIELDS ============
+    @Column(name = "likes_count")
+    @JsonProperty("likesCount")
+    private Integer likesCount = 0;
+
+    @Column(name = "comments_count")
+    @JsonProperty("commentsCount")
+    private Integer commentsCount = 0;
+    // ============ END LIKES & COMMENTS FIELDS ============
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     @JsonProperty("createdAt")
@@ -98,6 +108,8 @@ public class Product {
     // Constructors
     public Product() {
         this.images = new ArrayList<>();
+        this.likesCount = 0;
+        this.commentsCount = 0;
     }
 
     // Getters and Setters
@@ -243,6 +255,24 @@ public class Product {
     public void setVideoUrl(String videoUrl) {
         this.videoUrl = videoUrl;
     }
+
+    // ============ LIKES & COMMENTS GETTERS/SETTERS ============
+    public Integer getLikesCount() {
+        return likesCount != null ? likesCount : 0;
+    }
+
+    public void setLikesCount(Integer likesCount) {
+        this.likesCount = likesCount != null ? likesCount : 0;
+    }
+
+    public Integer getCommentsCount() {
+        return commentsCount != null ? commentsCount : 0;
+    }
+
+    public void setCommentsCount(Integer commentsCount) {
+        this.commentsCount = commentsCount != null ? commentsCount : 0;
+    }
+    // ============ END LIKES & COMMENTS GETTERS/SETTERS ============
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

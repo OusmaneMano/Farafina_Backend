@@ -250,4 +250,161 @@ public class ProductController {
                     .body(Map.of("success", false, "error", "Failed to fetch products"));
         }
     }
+
+    // ============ LIKES & COMMENTS ENDPOINTS ============
+
+    // Get all likes for a product
+    @GetMapping("/{productId}/likes")
+    public ResponseEntity<?> getProductLikes(@PathVariable Long productId) {
+        try {
+            List<Map<String, Object>> likes = productService.getProductLikes(productId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("likes", likes);
+            response.put("count", likes.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // Get all comments for a product
+    @GetMapping("/{productId}/comments")
+    public ResponseEntity<?> getProductComments(@PathVariable Long productId) {
+        try {
+            List<Map<String, Object>> comments = productService.getProductComments(productId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("comments", comments);
+            response.put("count", comments.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // Add a like to a product
+    @PostMapping("/{productId}/like")
+    public ResponseEntity<?> likeProduct(
+            @PathVariable Long productId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            Long userId = Long.valueOf(request.get("userId").toString());
+            boolean result = productService.likeProduct(productId, userId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", result);
+            response.put("message", result ? "Product liked successfully" : "Like already exists");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // Remove a like from a product
+    @DeleteMapping("/{productId}/like/{userId}")
+    public ResponseEntity<?> unlikeProduct(
+            @PathVariable Long productId,
+            @PathVariable Long userId) {
+        try {
+            boolean result = productService.unlikeProduct(productId, userId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", result);
+            response.put("message", "Like removed successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // Add a comment to a product
+    @PostMapping("/{productId}/comment")
+    public ResponseEntity<?> commentOnProduct(
+            @PathVariable Long productId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            Long userId = Long.valueOf(request.get("userId").toString());
+            String comment = request.get("comment").toString();
+
+            Map<String, Object> result = productService.addComment(productId, userId, comment);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Comment added successfully");
+            response.put("comment", result);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // Delete a comment
+    @DeleteMapping("/{productId}/comment/{commentId}")
+    public ResponseEntity<?> deleteComment(
+            @PathVariable Long productId,
+            @PathVariable Long commentId) {
+        try {
+            boolean result = productService.deleteComment(commentId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", result);
+            response.put("message", "Comment deleted successfully");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
+
+    // Get interaction statistics for a product
+    @GetMapping("/{productId}/stats")
+    public ResponseEntity<?> getProductInteractionStats(@PathVariable Long productId) {
+        try {
+            Map<String, Object> stats = productService.getProductInteractionStats(productId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("stats", stats);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(error);
+        }
+    }
 }
